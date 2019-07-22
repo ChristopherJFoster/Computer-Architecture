@@ -27,7 +27,7 @@ class CPU:
 
         if len(sys.argv) < 2:
             print(
-                'Expected program name in command line (after ls8.py). Exiting LS-8 Emulator.')
+                'Error: Expected program name in command line (after ls8.py). Exiting LS-8 Emulator.')
             sys.exit()
 
         address = 0
@@ -44,7 +44,11 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
+        elif op == 'MUL':
+            total = 0b00000010  # store total in R02
+            for _ in range(self.reg[reg_b]):
+                self.reg[total] += self.reg[reg_a]
+            self.reg[reg_a] = self.reg[total]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -75,6 +79,7 @@ class CPU:
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
+        MUL = 0b10100010
 
         running = True
         while running:
@@ -90,3 +95,9 @@ class CPU:
             elif self.ram[self.IR] == PRN:
                 print(self.reg[operand_a])
                 self.PC += 2
+            elif self.ram[self.IR] == MUL:
+                self.alu('MUL', operand_a, operand_b)
+                self.PC += 3
+            else:
+                print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
+                sys.exit()
