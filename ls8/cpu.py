@@ -16,6 +16,12 @@ class CPU:
         self.MDR = 0  # Memory Data Register, holds the value to write or the value just read
         self.FL = 0  # Flags
 
+    def ram_read(self, MAR):
+        return self.ram[MAR]
+
+    def ram_write(self, MDR, MAR):
+        self.ram[MAR] = MDR
+
     def load(self):
         """Load a program into memory."""
 
@@ -74,3 +80,5 @@ class CPU:
 cpu = CPU()
 print(cpu.ram)
 print(cpu.reg)
+cpu.ram_write(0b00010001, 0xa5)
+print(cpu.ram_read(0xa5))
