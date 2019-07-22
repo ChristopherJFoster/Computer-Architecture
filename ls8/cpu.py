@@ -25,23 +25,19 @@ class CPU:
     def load(self):
         """Load a program into memory."""
 
+        if len(sys.argv) < 2:
+            print(
+                'Expected program name in command line (after ls8.py). Exiting LS-8 Emulator.')
+            sys.exit()
+
         address = 0
 
-        # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        with open(sys.argv[1]) as f:
+            for line in f:
+                if line[0] != '#' and line != '\n':
+                    self.ram[address] = int(line[0:8], 2)
+                    address += 1
+            f.closed
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -86,20 +82,11 @@ class CPU:
             operand_a = self.ram_read(self.PC + 1)
             operand_b = self.ram_read(self.PC + 2)
 
-            if self.ram[self.IR] == HLT:  # HLT
+            if self.ram[self.IR] == HLT:
                 running = False
-            elif self.ram[self.IR] == LDI:  # LDI
+            elif self.ram[self.IR] == LDI:
                 self.reg[operand_a] = operand_b
                 self.PC += 3
-            elif self.ram[self.IR] == PRN:  # PRN
+            elif self.ram[self.IR] == PRN:
                 print(self.reg[operand_a])
                 self.PC += 2
-
-
-cpu = CPU()
-print(cpu.ram)
-print(cpu.reg)
-cpu.ram_write(0b00010001, 0xa5)
-print(cpu.ram_read(0xa5))
-cpu.load()
-cpu.run()
