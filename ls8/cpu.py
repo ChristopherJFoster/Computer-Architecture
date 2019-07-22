@@ -34,8 +34,8 @@ class CPU:
             0b10000010,  # LDI R0,8
             0b00000000,
             0b00001000,
-            # 0b01000111,  # PRN R0
-            # 0b00000000,
+            0b01000111,  # PRN R0
+            0b00000000,
             0b00000001,  # HLT
         ]
 
@@ -86,6 +86,9 @@ class CPU:
             elif self.ram[self.IR] == 0b10000010:  # LDI
                 self.reg[operand_a] = operand_b
                 self.PC += 3
+            elif self.ram[self.IR] == 0b01000111:  # PRN
+                print(self.reg[operand_a])
+                self.PC += 2
 
 
 cpu = CPU()
