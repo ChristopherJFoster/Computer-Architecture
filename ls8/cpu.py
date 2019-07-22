@@ -31,11 +31,11 @@ class CPU:
 
         program = [
             # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
+            # 0b10000010,  # LDI R0,8
+            # 0b00000000,
+            # 0b00001000,
+            # 0b01000111,  # PRN R0
+            # 0b00000000,
             0b00000001,  # HLT
         ]
 
@@ -74,13 +74,15 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        self.IR = self.PC
-        operand_a = self.ram_read(self.PC + 1)
-        operand_b = self.ram_read(self.PC + 2)
+
         running = True
         while running:
-            # do stuff
-            print('running')
+            self.IR = self.PC
+            operand_a = self.ram_read(self.PC + 1)
+            operand_b = self.ram_read(self.PC + 2)
+
+            if self.ram[self.IR] == 0b00000001:
+                running = False
 
 
 cpu = CPU()
@@ -88,4 +90,5 @@ print(cpu.ram)
 print(cpu.reg)
 cpu.ram_write(0b00010001, 0xa5)
 print(cpu.ram_read(0xa5))
+cpu.load()
 cpu.run()
