@@ -10,8 +10,8 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 0xff
         self.reg = [0] * 0x08
-        self.PC = 0  # Program Counter, address of the currently executing instruction
-        self.IR = 0  # Instruction Register, contains a copy of the currently executing instruction
+        self.PC = 0x00  # Program Counter, address of the currently executing instruction
+        self.IR = 0x00  # Instruction Register, contains a copy of the currently executing instruction
         self.MAR = 0  # Memory Address Register, holds the memory address we're reading or writing
         self.MDR = 0  # Memory Data Register, holds the value to write or the value just read
         self.FL = 0  # Flags
@@ -74,7 +74,13 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        self.IR = self.PC
+        operand_a = self.ram_read(self.PC + 1)
+        operand_b = self.ram_read(self.PC + 2)
+        running = True
+        while running:
+            # do stuff
+            print('running')
 
 
 cpu = CPU()
@@ -82,3 +88,4 @@ print(cpu.ram)
 print(cpu.reg)
 cpu.ram_write(0b00010001, 0xa5)
 print(cpu.ram_read(0xa5))
+cpu.run()
