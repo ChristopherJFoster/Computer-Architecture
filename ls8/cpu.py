@@ -99,4 +99,4 @@ class CPU:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
 
-            self.PC += ((self.ram[self.IR] >> 6) & 0b00000011) + 1
+            self.PC += ((self.ram[self.IR] >> 6) & 0b11) + 1
