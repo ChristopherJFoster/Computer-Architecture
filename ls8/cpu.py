@@ -15,14 +15,21 @@ class CPU:
         self.MAR = 0  # Memory Address Register
         self.MDR = 0  # Memory Data Register
         self.FL = 0  # Flags
+        self.halted = False
+        HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
         self.dispatch = {
+            HLT: self.handle_HLT,
             LDI: self.handle_LDI,
             PRN: self.handle_PRN,
             MUL: self.handle_MUL
         }
+
+    def handle_HLT(self):
+        self.halted = True
+        print('Program halted. Exiting LS-8 Emulator.')
 
     def handle_LDI(self, a, b):
         self.reg[a] = b
@@ -92,34 +99,25 @@ class CPU:
     def run(self):
         """Run the CPU."""
 
-        HLT = 0B00000001
-
+        HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
+        opcodes = {HLT, LDI, PRN, MUL}
 
-        opcodes = {LDI, PRN, MUL}
-
-        running = True
-
-        while running:
+        while self.halted == False:
             self.IR = self.PC
-
             opsNum = (self.ram[self.IR] >> 6) & 0b11
 
-            if self.ram[self.IR] == HLT:
-                running = False
-
-            elif self.ram[self.IR] in opcodes and opsNum == 0:
-                self.dispatch[self.ram[self.IR]]
-
-            elif self.ram[self.IR] in opcodes and opsNum == 1:
-                self.dispatch[self.ram[self.IR]](self.ram_read(self.PC + 1))
-
-            elif self.ram[self.IR] in opcodes and opsNum == 2:
-                self.dispatch[self.ram[self.IR]](self.ram_read(
-                    self.PC + 1), self.ram_read(self.PC + 2))
-
+            if self.ram[self.IR] in opcodes:
+                if opsNum == 0:
+                    self.dispatch[self.ram[self.IR]]()
+                if opsNum == 1:
+                    self.dispatch[self.ram[self.IR]](
+                        self.ram_read(self.PC + 1))
+                if opsNum == 2:
+                    self.dispatch[self.ram[self.IR]](self.ram_read(
+                        self.PC + 1), self.ram_read(self.PC + 2))
             else:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
