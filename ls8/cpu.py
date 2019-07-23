@@ -27,7 +27,7 @@ class CPU:
     def handle_LDI(self, a, b):
         self.reg[a] = b
 
-    def handle_PRN(self, a, b):
+    def handle_PRN(self, a):
         print(self.reg[a])
 
     def handle_MUL(self, a, b):
@@ -104,17 +104,24 @@ class CPU:
 
         while running:
             self.IR = self.PC
-            operand_a = self.ram_read(self.PC + 1)
-            operand_b = self.ram_read(self.PC + 2)
+
+            opsNum = (self.ram[self.IR] >> 6) & 0b11
 
             if self.ram[self.IR] == HLT:
                 running = False
 
-            elif self.ram[self.IR] in opcodes:
-                self.dispatch[self.ram[self.IR]](operand_a, operand_b)
+            elif self.ram[self.IR] in opcodes and opsNum == 0:
+                self.dispatch[self.ram[self.IR]]
+
+            elif self.ram[self.IR] in opcodes and opsNum == 1:
+                self.dispatch[self.ram[self.IR]](self.ram_read(self.PC + 1))
+
+            elif self.ram[self.IR] in opcodes and opsNum == 2:
+                self.dispatch[self.ram[self.IR]](self.ram_read(
+                    self.PC + 1), self.ram_read(self.PC + 2))
 
             else:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
 
-            self.PC += ((self.ram[self.IR] >> 6) & 0b11) + 1
+            self.PC += opsNum + 1
