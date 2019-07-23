@@ -91,13 +91,12 @@ class CPU:
                 running = False
             elif self.ram[self.IR] == LDI:
                 self.reg[operand_a] = operand_b
-                self.PC += 3
             elif self.ram[self.IR] == PRN:
                 print(self.reg[operand_a])
-                self.PC += 2
             elif self.ram[self.IR] == MUL:
                 self.alu('MUL', operand_a, operand_b)
-                self.PC += 3
             else:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
+
+            self.PC += ((self.ram[self.IR] >> 6) & 0b00000011) + 1
