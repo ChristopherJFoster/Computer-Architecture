@@ -10,13 +10,14 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 0xff  # Ram 0x00 - 0xff
         self.reg = [0] * 0x08  # Registers R0 - R7
-        self.reg[0x07] = 0xf4  # Stack Pointer
+        self.SP = 0x07  # R7 will be the Stack Pointer
+        self.reg[self.SP] = 0xf4  # Set Stack Pointer equal to 0xf4
         self.PC = 0x00  # Program Counter
         self.IR = 0x00  # Instruction Register
         self.MAR = 0  # Memory Address Register (not used)
         self.MDR = 0  # Memory Data Register (not used)
         self.FL = 0  # Flags
-        self.halted = False
+        self.halted = False  # Used to handle HLT
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
@@ -47,12 +48,12 @@ class CPU:
         self.alu('MUL', a, b)
 
     def handle_PUSH(self, a):
-        self.reg[0x07] -= 1
-        self.ram[self.reg[0x07]] = self.reg[a]
+        self.reg[self.SP] -= 1
+        self.ram[self.reg[self.SP]] = self.reg[a]
 
     def handle_POP(self, a):
-        self.reg[a] = self.ram[self.reg[0x07]]
-        self.reg[0x07] += 1
+        self.reg[a] = self.ram[self.reg[self.SP]]
+        self.reg[self.SP] += 1
 
     def ram_read(self, MAR):
         return self.ram[MAR]
