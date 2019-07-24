@@ -26,6 +26,7 @@ class CPU:
         POP = 0b01000110
         CALL = 0b01010000
         RET = 0b00010001
+        ADD = 0B10100000
 
         self.dispatch = {
             HLT: self.handle_HLT,
@@ -35,7 +36,8 @@ class CPU:
             PUSH: self.handle_PUSH,
             POP: self.handle_POP,
             CALL: self.handle_CALL,
-            RET: self.handle_RET
+            RET: self.handle_RET,
+            ADD: self.handle_ADD
         }
 
     def handle_HLT(self):
@@ -60,10 +62,16 @@ class CPU:
         self.reg[self.SP] += 1
 
     def handle_CALL(self, a):
-        pass
+        self.reg[0x04] = self.PC + 2
+        self.handle_PUSH(0x04)
+        self.PC = self.reg[a]
 
-    def handle_RET(self, a):
-        pass
+    def handle_RET(self):
+        self.handle_POP(0x04)
+        self.PC = self.reg[0x04]
+
+    def handle_ADD(self, a, b):
+        self.alu('ADD', a, b)
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -129,11 +137,13 @@ class CPU:
         POP = 0b01000110
         CALL = 0b01010000
         RET = 0b00010001
-        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET}
+        ADD = 0b10100000
+        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET, ADD}
 
         while self.halted == False:
             self.IR = self.PC
             opsNum = (self.ram[self.IR] >> 6) & 0b11
+            setPC = (self.ram[self.IR] >> 4) & 0b0001
 
             if self.ram[self.IR] in opcodes:
                 if opsNum == 0:
@@ -148,4 +158,5 @@ class CPU:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
 
-            self.PC += opsNum + 1
+            if setPC == 0:
+                self.PC += opsNum + 1
