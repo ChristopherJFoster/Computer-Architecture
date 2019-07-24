@@ -77,16 +77,13 @@ class CPU:
                     address += 1
             f.closed
 
-    def alu(self, op, reg_a, reg_b):
+    def alu(self, op, a, b):
         """ALU operations."""
 
         if op == 'ADD':
-            self.reg[reg_a] += self.reg[reg_b]
+            self.reg[a] += self.reg[b]
         elif op == 'MUL':
-            # self.reg[reg_a] *= self.reg[reg_b]
-            for _ in range(self.reg[reg_b]):
-                self.reg[0x02] += self.reg[reg_a]
-            self.reg[reg_a] = self.reg[0x02]
+            self.reg[a] *= self.reg[b]
         else:
             raise Exception("Unsupported ALU operation")
 
