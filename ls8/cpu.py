@@ -21,15 +21,16 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
-        POP = 0b01000110
         PUSH = 0b01000101
+        POP = 0b01000110
+
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
             PRN: self.handle_PRN,
             MUL: self.handle_MUL,
-            POP: self.handle_POP,
-            PUSH: self.handle_PUSH
+            PUSH: self.handle_PUSH,
+            POP: self.handle_POP
         }
 
     def handle_HLT(self):
@@ -45,13 +46,13 @@ class CPU:
     def handle_MUL(self, a, b):
         self.alu('MUL', a, b)
 
-    def handle_POP(self, a):
-        # TODO
-        pass
-
     def handle_PUSH(self, a):
-        # TODO
-        pass
+        self.reg[0x07] -= 1
+        self.ram[self.reg[0x07]] = self.reg[a]
+
+    def handle_POP(self, a):
+        self.reg[a] = self.ram[self.reg[0x07]]
+        self.reg[0x07] += 1
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -116,9 +117,9 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
-        POP = 0b01000110
         PUSH = 0b01000101
-        opcodes = {HLT, LDI, PRN, MUL, POP, PUSH}
+        POP = 0b01000110
+        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP}
 
         while self.halted == False:
             self.IR = self.PC
