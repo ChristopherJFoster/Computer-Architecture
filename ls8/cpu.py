@@ -8,12 +8,13 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = [0] * 0xff
-        self.reg = [0] * 0x08
+        self.ram = [0] * 0xff  # Ram 0x00 - 0xff
+        self.reg = [0] * 0x08  # Registers R0 - R7
+        self.reg[7] = 0xf4  # Stack Pointer
         self.PC = 0x00  # Program Counter
         self.IR = 0x00  # Instruction Register
-        self.MAR = 0  # Memory Address Register
-        self.MDR = 0  # Memory Data Register
+        self.MAR = 0  # Memory Address Register (not used)
+        self.MDR = 0  # Memory Data Register (not used)
         self.FL = 0  # Flags
         self.halted = False
         HLT = 0b00000001
@@ -66,13 +67,13 @@ class CPU:
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
-        if op == "ADD":
+        if op == 'ADD':
             self.reg[reg_a] += self.reg[reg_b]
         elif op == 'MUL':
-            total = 0b00000010  # store total in R02
+            # self.reg[reg_a] *= self.reg[reg_b]
             for _ in range(self.reg[reg_b]):
-                self.reg[total] += self.reg[reg_a]
-            self.reg[reg_a] = self.reg[total]
+                self.reg[0x02] += self.reg[reg_a]
+            self.reg[reg_a] = self.reg[0x02]
         else:
             raise Exception("Unsupported ALU operation")
 
