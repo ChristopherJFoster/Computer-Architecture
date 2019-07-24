@@ -10,11 +10,35 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 0xff
         self.reg = [0] * 0x08
-        self.PC = 0x00  # Program Counter, address of the currently executing instruction
-        self.IR = 0x00  # Instruction Register, contains a copy of the currently executing instruction
-        self.MAR = 0  # Memory Address Register, holds the memory address we're reading or writing
-        self.MDR = 0  # Memory Data Register, holds the value to write or the value just read
+        self.PC = 0x00  # Program Counter
+        self.IR = 0x00  # Instruction Register
+        self.MAR = 0  # Memory Address Register
+        self.MDR = 0  # Memory Data Register
         self.FL = 0  # Flags
+        self.halted = False
+        HLT = 0b00000001
+        LDI = 0b10000010
+        PRN = 0b01000111
+        MUL = 0b10100010
+        self.dispatch = {
+            HLT: self.handle_HLT,
+            LDI: self.handle_LDI,
+            PRN: self.handle_PRN,
+            MUL: self.handle_MUL
+        }
+
+    def handle_HLT(self):
+        self.halted = True
+        print('Program halted. Exiting LS-8 Emulator.')
+
+    def handle_LDI(self, a, b):
+        self.reg[a] = b
+
+    def handle_PRN(self, a):
+        print(self.reg[a])
+
+    def handle_MUL(self, a, b):
+        self.alu('MUL', a, b)
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -75,29 +99,27 @@ class CPU:
     def run(self):
         """Run the CPU."""
 
-        # opcodes
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
+        opcodes = {HLT, LDI, PRN, MUL}
 
-        running = True
-        while running:
+        while self.halted == False:
             self.IR = self.PC
-            operand_a = self.ram_read(self.PC + 1)
-            operand_b = self.ram_read(self.PC + 2)
+            opsNum = (self.ram[self.IR] >> 6) & 0b11
 
-            if self.ram[self.IR] == HLT:
-                running = False
-            elif self.ram[self.IR] == LDI:
-                self.reg[operand_a] = operand_b
-                self.PC += 3
-            elif self.ram[self.IR] == PRN:
-                print(self.reg[operand_a])
-                self.PC += 2
-            elif self.ram[self.IR] == MUL:
-                self.alu('MUL', operand_a, operand_b)
-                self.PC += 3
+            if self.ram[self.IR] in opcodes:
+                if opsNum == 0:
+                    self.dispatch[self.ram[self.IR]]()
+                if opsNum == 1:
+                    self.dispatch[self.ram[self.IR]](
+                        self.ram_read(self.PC + 1))
+                if opsNum == 2:
+                    self.dispatch[self.ram[self.IR]](self.ram_read(
+                        self.PC + 1), self.ram_read(self.PC + 2))
             else:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
+
+            self.PC += opsNum + 1
