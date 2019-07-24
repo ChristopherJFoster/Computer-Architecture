@@ -10,7 +10,7 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 0xff  # Ram 0x00 - 0xff
         self.reg = [0] * 0x08  # Registers R0 - R7
-        self.reg[7] = 0xf4  # Stack Pointer
+        self.reg[0x07] = 0xf4  # Stack Pointer
         self.PC = 0x00  # Program Counter
         self.IR = 0x00  # Instruction Register
         self.MAR = 0  # Memory Address Register (not used)
@@ -21,11 +21,15 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
+        POP = 0b01000110
+        PUSH = 0b01000101
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
             PRN: self.handle_PRN,
-            MUL: self.handle_MUL
+            MUL: self.handle_MUL,
+            POP: self.handle_POP,
+            PUSH: self.handle_PUSH
         }
 
     def handle_HLT(self):
@@ -40,6 +44,14 @@ class CPU:
 
     def handle_MUL(self, a, b):
         self.alu('MUL', a, b)
+
+    def handle_POP(self, a):
+        # TODO
+        pass
+
+    def handle_PUSH(self, a):
+        # TODO
+        pass
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -104,7 +116,9 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
-        opcodes = {HLT, LDI, PRN, MUL}
+        POP = 0b01000110
+        PUSH = 0b01000101
+        opcodes = {HLT, LDI, PRN, MUL, POP, PUSH}
 
         while self.halted == False:
             self.IR = self.PC
