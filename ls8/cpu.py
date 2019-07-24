@@ -24,6 +24,8 @@ class CPU:
         MUL = 0b10100010
         PUSH = 0b01000101
         POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
 
         self.dispatch = {
             HLT: self.handle_HLT,
@@ -31,7 +33,9 @@ class CPU:
             PRN: self.handle_PRN,
             MUL: self.handle_MUL,
             PUSH: self.handle_PUSH,
-            POP: self.handle_POP
+            POP: self.handle_POP,
+            CALL: self.handle_CALL,
+            RET: self.handle_RET
         }
 
     def handle_HLT(self):
@@ -54,6 +58,12 @@ class CPU:
     def handle_POP(self, a):
         self.reg[a] = self.ram[self.reg[self.SP]]
         self.reg[self.SP] += 1
+
+    def handle_CALL(self, a):
+        pass
+
+    def handle_RET(self, a):
+        pass
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -117,7 +127,9 @@ class CPU:
         MUL = 0b10100010
         PUSH = 0b01000101
         POP = 0b01000110
-        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP}
+        CALL = 0b01010000
+        RET = 0b00010001
+        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET}
 
         while self.halted == False:
             self.IR = self.PC
