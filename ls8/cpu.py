@@ -12,14 +12,17 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 0xff  # Ram 0x00 - 0xff
         self.reg = [0] * 0x08  # Registers R0 - R7
+        self.IM = 0x05  # R5 will be the Interrupt Mask
+        self.IS = 0x06  # R6 will be the Interrupt Status
         self.SP = 0x07  # R7 will be the Stack Pointer
         self.reg[self.SP] = 0xf4  # Set Stack Pointer equal to 0xf4
         self.PC = 0x00  # Program Counter
         self.IR = 0x00  # Instruction Register
-        self.MAR = 0  # Memory Address Register (not used)
-        self.MDR = 0  # Memory Data Register (not used)
-        self.FL = 0  # Flags
+        self.MAR = 0b0000000  # Memory Address Register (not used)
+        self.MDR = 0b0000000  # Memory Data Register (not used)
+        self.FL = 0b0000000  # Flags
         self.halted = False  # Used to handle HLT
+        self.disint = False  # Disable Interrupts
         self.timestamp = datetime.now().timestamp()  # Use to run interrupt timer
         HLT = 0b00000001
         LDI = 0b10000010
@@ -153,6 +156,25 @@ class CPU:
             timecheck = datetime.now().timestamp()
             if timecheck - self.timestamp >= 1:
                 self.timestamp = timecheck
+                self.reg[self.IS] += 0b00000001
+
+            # Interrupt Check (if interrupts not disabled)
+            if not self.disint:
+                self.MDR = self.reg[self.IM] & self.reg[self.IS]
+                # print("{0:b}".format(self.MDR))
+                for bit in range(8):
+                    if self.MDR >> bit & 0b00000001 == 1:
+                        self.disint = True
+                        self.reg[self.IS] = self.reg[self.IS] - \
+                            (0b00000001 << bit)
+                        self.reg[0x04] = self.PC
+                        self.handle_PUSH(0x04)
+                        self.reg[0x04] = self.FL
+                        self.handle_PUSH(0x04)
+                        for reg in range(7):
+                            self.handle_PUSH(reg)
+                        self.MAR = self.ram[0xF8 + bit]
+                        self.PC = self.MAR
 
             self.IR = self.PC
             opsNum = (self.ram[self.IR] >> 6) & 0b11
