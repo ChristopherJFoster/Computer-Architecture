@@ -8,23 +8,36 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = [0] * 0xff
-        self.reg = [0] * 0x08
+        self.ram = [0] * 0xff  # Ram 0x00 - 0xff
+        self.reg = [0] * 0x08  # Registers R0 - R7
+        self.SP = 0x07  # R7 will be the Stack Pointer
+        self.reg[self.SP] = 0xf4  # Set Stack Pointer equal to 0xf4
         self.PC = 0x00  # Program Counter
         self.IR = 0x00  # Instruction Register
-        self.MAR = 0  # Memory Address Register
-        self.MDR = 0  # Memory Data Register
+        self.MAR = 0  # Memory Address Register (not used)
+        self.MDR = 0  # Memory Data Register (not used)
         self.FL = 0  # Flags
-        self.halted = False
+        self.halted = False  # Used to handle HLT
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
+        ADD = 0B10100000
+
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
             PRN: self.handle_PRN,
-            MUL: self.handle_MUL
+            MUL: self.handle_MUL,
+            PUSH: self.handle_PUSH,
+            POP: self.handle_POP,
+            CALL: self.handle_CALL,
+            RET: self.handle_RET,
+            ADD: self.handle_ADD
         }
 
     def handle_HLT(self):
@@ -39,6 +52,26 @@ class CPU:
 
     def handle_MUL(self, a, b):
         self.alu('MUL', a, b)
+
+    def handle_PUSH(self, a):
+        self.reg[self.SP] -= 1
+        self.ram[self.reg[self.SP]] = self.reg[a]
+
+    def handle_POP(self, a):
+        self.reg[a] = self.ram[self.reg[self.SP]]
+        self.reg[self.SP] += 1
+
+    def handle_CALL(self, a):
+        self.reg[0x04] = self.PC + 2
+        self.handle_PUSH(0x04)
+        self.PC = self.reg[a]
+
+    def handle_RET(self):
+        self.handle_POP(0x04)
+        self.PC = self.reg[0x04]
+
+    def handle_ADD(self, a, b):
+        self.alu('ADD', a, b)
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -63,16 +96,13 @@ class CPU:
                     address += 1
             f.closed
 
-    def alu(self, op, reg_a, reg_b):
+    def alu(self, op, a, b):
         """ALU operations."""
 
-        if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+        if op == 'ADD':
+            self.reg[a] += self.reg[b]
         elif op == 'MUL':
-            total = 0b00000010  # store total in R02
-            for _ in range(self.reg[reg_b]):
-                self.reg[total] += self.reg[reg_a]
-            self.reg[reg_a] = self.reg[total]
+            self.reg[a] *= self.reg[b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -103,11 +133,17 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
-        opcodes = {HLT, LDI, PRN, MUL}
+        PUSH = 0b01000101
+        POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
+        ADD = 0b10100000
+        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET, ADD}
 
         while self.halted == False:
             self.IR = self.PC
             opsNum = (self.ram[self.IR] >> 6) & 0b11
+            setPC = (self.ram[self.IR] >> 4) & 0b0001
 
             if self.ram[self.IR] in opcodes:
                 if opsNum == 0:
@@ -122,4 +158,5 @@ class CPU:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
 
-            self.PC += opsNum + 1
+            if setPC == 0:
+                self.PC += opsNum + 1
