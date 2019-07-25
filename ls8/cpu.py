@@ -18,8 +18,8 @@ class CPU:
         self.reg[self.SP] = 0xf4  # Set Stack Pointer equal to 0xf4
         self.PC = 0x00  # Program Counter
         self.IR = 0x00  # Instruction Register
-        self.MAR = 0b0000000  # Memory Address Register (not used)
-        self.MDR = 0b0000000  # Memory Data Register (not used)
+        self.MAR = 0b0000000  # Memory Address Register
+        self.MDR = 0b0000000  # Memory Data Register
         self.FL = 0b0000000  # Flags
         self.halted = False  # Used to handle HLT
         self.disint = False  # Disable Interrupts
@@ -145,8 +145,7 @@ class CPU:
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
             self.PC,
-            # self.FL,
-            # self.ie,
+            self.FL,
             self.ram_read(self.PC),
             self.ram_read(self.PC + 1),
             self.ram_read(self.PC + 2)
@@ -186,7 +185,6 @@ class CPU:
             # Interrupt Check (if interrupts not disabled)
             if not self.disint:
                 self.MDR = self.reg[self.IM] & self.reg[self.IS]
-                # print("{0:b}".format(self.MDR))
                 for bit in range(8):
                     if self.MDR >> bit & 0b00000001 == 1:
                         self.disint = True
