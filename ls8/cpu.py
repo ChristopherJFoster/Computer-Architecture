@@ -34,6 +34,9 @@ class CPU:
         RET = 0b00010001
         ADD = 0B10100000
         ST = 0b10000100
+        JMP = 0b01010100
+        PRA = 0b01001000
+        IRET = 0b00010011
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
@@ -45,6 +48,9 @@ class CPU:
             RET: self.handle_RET,
             ADD: self.handle_ADD,
             ST: self.handle_ST,
+            JMP: self.handle_JMP,
+            PRA: self.handle_PRA,
+            IRET: self.handle_IRET
         }
 
     def handle_HLT(self):
@@ -82,6 +88,21 @@ class CPU:
 
     def handle_ST(self, a, b):
         self.ram[self.reg[a]] = self.reg[b]
+
+    def handle_JMP(self, a):
+        self.PC = self.reg[a]
+
+    def handle_PRA(self, a):
+        print(chr(self.reg[a]))
+
+    def handle_IRET(self):
+        for reg in range(6, -1, -1):
+            self.handle_POP(reg)
+        self.handle_POP(0x04)
+        self.FL = self.reg[0x04]
+        self.handle_POP(0x04)
+        self.PC = self.reg[0x04]
+        self.disint = False
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -149,7 +170,11 @@ class CPU:
         RET = 0b00010001
         ADD = 0b10100000
         ST = 0b10000100
-        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET, ADD, ST}
+        JMP = 0b01010100
+        PRA = 0b01001000
+        IRET = 0b00010011
+        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP,
+                   CALL, RET, ADD, ST, JMP, PRA, IRET}
 
         while self.halted == False:
             # Interrupt Timer
@@ -175,6 +200,9 @@ class CPU:
                             self.handle_PUSH(reg)
                         self.MAR = self.ram[0xF8 + bit]
                         self.PC = self.MAR
+                        break
+                if self.disint:
+                    continue
 
             self.IR = self.PC
             opsNum = (self.ram[self.IR] >> 6) & 0b11
