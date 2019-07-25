@@ -1,6 +1,8 @@
 """CPU functionality."""
 
 import sys
+from datetime import datetime
+import time
 
 
 class CPU:
@@ -18,6 +20,7 @@ class CPU:
         self.MDR = 0  # Memory Data Register (not used)
         self.FL = 0  # Flags
         self.halted = False  # Used to handle HLT
+        self.timestamp = datetime.now().timestamp()  # Use to run interrupt timer
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
@@ -28,7 +31,6 @@ class CPU:
         RET = 0b00010001
         ADD = 0B10100000
         ST = 0b10000100
-
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
@@ -147,6 +149,11 @@ class CPU:
         opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET, ADD, ST}
 
         while self.halted == False:
+            # Interrupt Timer
+            timecheck = datetime.now().timestamp()
+            if timecheck - self.timestamp >= 1:
+                self.timestamp = timecheck
+
             self.IR = self.PC
             opsNum = (self.ram[self.IR] >> 6) & 0b11
             setPC = (self.ram[self.IR] >> 4) & 0b0001
