@@ -27,6 +27,7 @@ class CPU:
         CALL = 0b01010000
         RET = 0b00010001
         ADD = 0B10100000
+        ST = 0b10000100
 
         self.dispatch = {
             HLT: self.handle_HLT,
@@ -37,7 +38,8 @@ class CPU:
             POP: self.handle_POP,
             CALL: self.handle_CALL,
             RET: self.handle_RET,
-            ADD: self.handle_ADD
+            ADD: self.handle_ADD,
+            ST: self.handle_ST,
         }
 
     def handle_HLT(self):
@@ -72,6 +74,9 @@ class CPU:
 
     def handle_ADD(self, a, b):
         self.alu('ADD', a, b)
+
+    def handle_ST(self, a, b):
+        self.ram[self.reg[a]] = self.reg[b]
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -138,7 +143,8 @@ class CPU:
         CALL = 0b01010000
         RET = 0b00010001
         ADD = 0b10100000
-        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET, ADD}
+        ST = 0b10000100
+        opcodes = {HLT, LDI, PRN, MUL, PUSH, POP, CALL, RET, ADD, ST}
 
         while self.halted == False:
             self.IR = self.PC
@@ -147,11 +153,14 @@ class CPU:
 
             if self.ram[self.IR] in opcodes:
                 if opsNum == 0:
+                    # operation()
                     self.dispatch[self.ram[self.IR]]()
                 if opsNum == 1:
+                    # operation(operand a)
                     self.dispatch[self.ram[self.IR]](
                         self.ram_read(self.PC + 1))
                 if opsNum == 2:
+                    # operation(operand a, operand b)
                     self.dispatch[self.ram[self.IR]](self.ram_read(
                         self.PC + 1), self.ram_read(self.PC + 2))
             else:
