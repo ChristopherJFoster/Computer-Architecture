@@ -113,7 +113,12 @@ class CPU:
         self.disint = False
 
     def handle_CMP(self, a, b):
-        pass
+        if a < b:
+            self.FL = self.FL + 0b00000100
+        elif a > b:
+            self.FL = self.FL + 0b00000010
+        else:
+            self.FL = self.FL + 0b00000001
 
     def handle_JEQ(self, a, b):
         pass
