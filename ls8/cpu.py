@@ -37,6 +37,9 @@ class CPU:
         JMP = 0b01010100
         PRA = 0b01001000
         IRET = 0b00010011
+        CMP = 0b10100111
+        JEQ = 0b01010101
+        JNE = 0b01010110
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
@@ -50,7 +53,10 @@ class CPU:
             ST: self.handle_ST,
             JMP: self.handle_JMP,
             PRA: self.handle_PRA,
-            IRET: self.handle_IRET
+            IRET: self.handle_IRET,
+            CMP: self.handle_CMP,
+            JEQ: self.handle_JEQ,
+            JNE: self.handle_JNE,
         }
 
     def handle_HLT(self):
@@ -103,6 +109,15 @@ class CPU:
         self.handle_POP(0x04)
         self.PC = self.reg[0x04]
         self.disint = False
+
+    def handle_CMP(self, a, b):
+        pass
+
+    def handle_JEQ(self, a, b):
+        pass
+
+    def handle_JNE(self, a, b):
+        pass
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -172,8 +187,11 @@ class CPU:
         JMP = 0b01010100
         PRA = 0b01001000
         IRET = 0b00010011
+        CMP = 0b10100111
+        JEQ = 0b01010101
+        JNE = 0b01010110
         opcodes = {HLT, LDI, PRN, MUL, PUSH, POP,
-                   CALL, RET, ADD, ST, JMP, PRA, IRET}
+                   CALL, RET, ADD, ST, JMP, PRA, IRET, CMP, JEQ, JNE}
 
         while self.halted == False:
             # Interrupt Timer
