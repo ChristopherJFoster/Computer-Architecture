@@ -17,10 +17,11 @@ class CPU:
         self.SP = 0x07  # R7 will be the Stack Pointer
         self.reg[self.SP] = 0xf4  # Set Stack Pointer equal to 0xf4
         self.PC = 0x00  # Program Counter
+        self.setPC = False  # Can and did an opcode set the program counter?
         self.IR = 0x00  # Instruction Register
-        self.MAR = 0b0000000  # Memory Address Register
-        self.MDR = 0b0000000  # Memory Data Register
-        self.FL = 0b0000000  # Flags
+        self.MAR = 0b00000000  # Memory Address Register
+        self.MDR = 0b00000000  # Memory Data Register
+        self.FL = 0b00000000  # Flags
         self.halted = False  # Used to handle HLT
         self.disint = False  # Disable Interrupts
         self.timestamp = datetime.now().timestamp()  # Use to run interrupt timer
@@ -37,6 +38,9 @@ class CPU:
         JMP = 0b01010100
         PRA = 0b01001000
         IRET = 0b00010011
+        CMP = 0b10100111
+        JEQ = 0b01010101
+        JNE = 0b01010110
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
@@ -50,7 +54,10 @@ class CPU:
             ST: self.handle_ST,
             JMP: self.handle_JMP,
             PRA: self.handle_PRA,
-            IRET: self.handle_IRET
+            IRET: self.handle_IRET,
+            CMP: self.handle_CMP,
+            JEQ: self.handle_JEQ,
+            JNE: self.handle_JNE
         }
 
     def handle_HLT(self):
@@ -104,6 +111,21 @@ class CPU:
         self.PC = self.reg[0x04]
         self.disint = False
 
+    def handle_CMP(self, a, b):
+        self.alu('CMP', a, b)
+
+    def handle_JEQ(self, a):
+        if self.FL & 0b00000001:
+            self.handle_JMP(a)
+        else:
+            self.setPC = False
+
+    def handle_JNE(self, a):
+        if not self.FL & 0b00000001:
+            self.handle_JMP(a)
+        else:
+            self.setPC = False
+
     def ram_read(self, MAR):
         return self.ram[MAR]
 
@@ -134,6 +156,18 @@ class CPU:
             self.reg[a] += self.reg[b]
         elif op == 'MUL':
             self.reg[a] *= self.reg[b]
+        elif op == 'CMP':
+            # set all three comparison flags to 0
+            self.FL = self.FL & 0b11111000
+            if self.reg[a] < self.reg[b]:
+                # set < flag to 1, > flag to 0, = flag to 0
+                self.FL = self.FL + 0b00000100
+            elif self.reg[a] > self.reg[b]:
+                # set < flag to 0, > flag to 1, = flas to 0
+                self.FL = self.FL + 0b00000010
+            else:
+                # set < flag to 0, > flag to 0, = flag to 1
+                self.FL = self.FL + 0b00000001
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -143,7 +177,7 @@ class CPU:
         from run() if you need help debugging.
         """
 
-        print(f"TRACE: %02X | %02X %02X %02X |" % (
+        print(f"TRACE: %02X FL: %02X | %02X %02X %02X |" % (
             self.PC,
             self.FL,
             self.ram_read(self.PC),
@@ -172,10 +206,14 @@ class CPU:
         JMP = 0b01010100
         PRA = 0b01001000
         IRET = 0b00010011
+        CMP = 0b10100111
+        JEQ = 0b01010101
+        JNE = 0b01010110
         opcodes = {HLT, LDI, PRN, MUL, PUSH, POP,
-                   CALL, RET, ADD, ST, JMP, PRA, IRET}
+                   CALL, RET, ADD, ST, JMP, PRA, IRET, CMP, JEQ, JNE}
 
         while self.halted == False:
+            self.trace()
             # Interrupt Timer
             timecheck = datetime.now().timestamp()
             if timecheck - self.timestamp >= 1:
@@ -186,7 +224,7 @@ class CPU:
             if not self.disint:
                 self.MDR = self.reg[self.IM] & self.reg[self.IS]
                 for bit in range(8):
-                    if self.MDR >> bit & 0b00000001 == 1:
+                    if self.MDR >> bit & 0b00000001:
                         self.disint = True
                         self.reg[self.IS] = self.reg[self.IS] - \
                             (0b00000001 << bit)
@@ -204,7 +242,7 @@ class CPU:
 
             self.IR = self.PC
             opsNum = (self.ram[self.IR] >> 6) & 0b11
-            setPC = (self.ram[self.IR] >> 4) & 0b0001
+            self.setPC = (self.ram[self.IR] >> 4) & 0b0001
 
             if self.ram[self.IR] in opcodes:
                 if opsNum == 0:
@@ -222,5 +260,5 @@ class CPU:
                 print('Error: Unknown opcode in program. Exiting LS-8 Emulator.')
                 sys.exit()
 
-            if setPC == 0:
+            if self.setPC == 0:
                 self.PC += opsNum + 1
