@@ -41,7 +41,6 @@ class CPU:
         CMP = 0b10100111
         JEQ = 0b01010101
         JNE = 0b01010110
-        SUB = 0b10100001
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
@@ -58,8 +57,7 @@ class CPU:
             IRET: self.handle_IRET,
             CMP: self.handle_CMP,
             JEQ: self.handle_JEQ,
-            JNE: self.handle_JNE,
-            SUB: self.handle_SUB
+            JNE: self.handle_JNE
         }
 
     def handle_HLT(self):
@@ -128,9 +126,6 @@ class CPU:
         else:
             self.setPC = False
 
-    def handle_SUB(self, a, b):
-        self.alu('SUB', a, b)
-
     def ram_read(self, MAR):
         return self.ram[MAR]
 
@@ -173,8 +168,6 @@ class CPU:
             else:
                 # set < flag to 0, > flag to 0, = flag to 1
                 self.FL = self.FL + 0b00000001
-        elif op == 'SUB':
-            self.reg[a] -= self.reg[b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -184,9 +177,9 @@ class CPU:
         from run() if you need help debugging.
         """
 
-        print(f"TRACE: %02X | %02X %02X %02X |" % (
+        print(f"TRACE: %02X FL: %02X | %02X %02X %02X |" % (
             self.PC,
-            # self.FL,
+            self.FL,
             self.ram_read(self.PC),
             self.ram_read(self.PC + 1),
             self.ram_read(self.PC + 2)
@@ -216,11 +209,11 @@ class CPU:
         CMP = 0b10100111
         JEQ = 0b01010101
         JNE = 0b01010110
-        SUB = 0b10100001
         opcodes = {HLT, LDI, PRN, MUL, PUSH, POP,
-                   CALL, RET, ADD, ST, JMP, PRA, IRET, CMP, JEQ, JNE, SUB}
+                   CALL, RET, ADD, ST, JMP, PRA, IRET, CMP, JEQ, JNE}
 
         while self.halted == False:
+            self.trace()
             # Interrupt Timer
             timecheck = datetime.now().timestamp()
             if timecheck - self.timestamp >= 1:
@@ -231,7 +224,7 @@ class CPU:
             if not self.disint:
                 self.MDR = self.reg[self.IM] & self.reg[self.IS]
                 for bit in range(8):
-                    if self.MDR >> bit & 0b00000001 == 1:
+                    if self.MDR >> bit & 0b00000001:
                         self.disint = True
                         self.reg[self.IS] = self.reg[self.IS] - \
                             (0b00000001 << bit)
