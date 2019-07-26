@@ -40,6 +40,7 @@ class CPU:
         CMP = 0b10100111
         JEQ = 0b01010101
         JNE = 0b01010110
+        SUB = 0b10100001
         self.dispatch = {
             HLT: self.handle_HLT,
             LDI: self.handle_LDI,
@@ -57,6 +58,7 @@ class CPU:
             CMP: self.handle_CMP,
             JEQ: self.handle_JEQ,
             JNE: self.handle_JNE,
+            SUB: self.handle_SUB
         }
 
     def handle_HLT(self):
@@ -119,6 +121,9 @@ class CPU:
     def handle_JNE(self, a, b):
         pass
 
+    def handle_SUB(self, a, b):
+        self.alu('SUB', a, b)
+
     def ram_read(self, MAR):
         return self.ram[MAR]
 
@@ -149,6 +154,8 @@ class CPU:
             self.reg[a] += self.reg[b]
         elif op == 'MUL':
             self.reg[a] *= self.reg[b]
+        elif op == 'SUB':
+            self.reg[a] -= self.reg[b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -190,8 +197,9 @@ class CPU:
         CMP = 0b10100111
         JEQ = 0b01010101
         JNE = 0b01010110
+        SUB = 0b10100001
         opcodes = {HLT, LDI, PRN, MUL, PUSH, POP,
-                   CALL, RET, ADD, ST, JMP, PRA, IRET, CMP, JEQ, JNE}
+                   CALL, RET, ADD, ST, JMP, PRA, IRET, CMP, JEQ, JNE, SUB}
 
         while self.halted == False:
             # Interrupt Timer
