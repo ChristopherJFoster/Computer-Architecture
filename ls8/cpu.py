@@ -117,13 +117,13 @@ class CPU:
         self.alu('CMP', a, b)
 
     def handle_JEQ(self, a):
-        if self.FL & 0b00000001 == 1:
+        if self.FL & 0b00000001:
             self.handle_JMP(a)
         else:
             self.setPC = False
 
     def handle_JNE(self, a):
-        if self.FL & 0b00000001 == 0:
+        if not self.FL & 0b00000001:
             self.handle_JMP(a)
         else:
             self.setPC = False
